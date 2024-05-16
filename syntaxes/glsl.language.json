@@ -48,7 +48,7 @@
         {
             "comment": "KEYWORD",
             "name": "keyword.control.glsl",
-            "match": "\\b(discard|return|break|continue|do|for|while|switch|case|default|if|else)\\b"
+            "match": "\\b(discard|return|break|continue|do|for|while|switch|case|default|if|else|import|from)\\b"
         },
         {
             "comment": "INTERFACE_BLOCK",
@@ -124,6 +124,37 @@
                             "match": "[_a-zA-Z]\\w*"
                         }
                     ]
+                }
+            }
+        },
+        {
+            "comment": "STRING LITERAL",
+            "name": "string.quoted.double.glsl",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "comment": "ESCAPE SEQUENCE",
+                    "name": "constant.character.escape.glsl",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        {
+            "comment": "IMPORT STATEMENT",
+            "match": "(import)(\\s|(/\\*.*?\\*/))+([_a-zA-Z]\\w*)(\\s|(/\\*.*?\\*/))+from(\\s|(/\\*.*?\\*/))+\"([^\"]*)\";",
+            "captures": {
+                "1": {
+                    "name": "keyword.control.glsl"
+                },
+                "3": {
+                    "name": "entity.name.type.glsl"
+                },
+                "4": {
+                    "name": "comment.block.glsl"
+                },
+                "8": {
+                    "name": "string.quoted.double.glsl"
                 }
             }
         },

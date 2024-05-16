@@ -173,7 +173,7 @@
                         "markdownDescription": "Places a space between the unary operators (`+`, `-`, `++`, `--`, `!`, `~`) and the operands.\n\n**Enabled:**\n```glsl\nint i = - 1;\n```\n**Disabled:**\n```glsl\nint i = -1;\n```",
                         "order": 6
                     },
-                    "webgl-glsl-editor.format.placeSpacesAroundBinaryOperators": {
+                    "webgl-glsl-editor.format.placeSpacesAroundglslangValidatoraryOperators": {
                         "type": "boolean",
                         "default": true,
                         "markdownDescription": "Places spaces around the binary operators (`+`, `-`, `*`, `/`, `%`, `<`, `<=`, `==`, `!=`, `>=`, `>`, `<<`, `>>`, `&&`, `||`, `^^`, `&`, `|`, `^`).\n\n**Enabled:**\n```glsl\nint i = index + 1;\n```\n**Disabled:**\n```glsl\nint i = index+1;\n```",

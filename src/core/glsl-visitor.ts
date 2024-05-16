@@ -1,7 +1,10 @@
 import { Token } from 'antlr4ts';
 import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor';
+import { ErrorNode } from 'antlr4ts/tree/ErrorNode';
 import { RuleNode } from 'antlr4ts/tree/RuleNode';
-import { Uri } from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+import { Uri, workspace } from 'vscode';
 import { AntlrGlslLexer } from '../_generated/AntlrGlslLexer';
 import {
     AntlrGlslParser,
@@ -13,6 +16,7 @@ import {
     Function_definitionContext,
     Function_headerContext,
     Function_prototypeContext,
+    Import_definitionContext,
     Interface_block_declarationContext,
     Invariant_declarationContext,
     Layout_qualifierContext,
@@ -37,11 +41,19 @@ import { Scope } from '../scope/scope';
 import { DocumentInfo } from './document-info';
 import { GlslEditor } from './glsl-editor';
 
+const EXTENSIONS = ['.glsl', '.vert', '.vs', '.frag', '.fs'];
+
+export type ImportError = {
+    message: string;
+    line: number;
+};
+
 export class GlslVisitor extends AbstractParseTreeVisitor<void> implements AntlrGlslParserVisitor<void> {
     private uri: Uri;
     private di: DocumentInfo;
     private scope: Scope;
 
+    public importErrors: ImportError[] = [];
     private currentFunction: FunctionDeclaration;
 
     public constructor(uri: Uri) {
@@ -165,6 +177,83 @@ export class GlslVisitor extends AbstractParseTreeVisitor<void> implements Antlr
         Helper.addFoldingRegionFromTokens(this.di, ctx.IDENTIFIER()?.symbol ?? ctx.LCB().symbol, ctx.RCB().symbol);
         new VariableDeclarationProcessor().getInterfaceBlockVariableDeclaration(ctx, this.scope, this.di);
         this.visitList(ctx.qualifier());
+    }
+
+    //
+    //imports
+    //
+    public visitImport_definition(ctx: Import_definitionContext): void {
+        for (const child of ctx.children) {
+            if (child instanceof ErrorNode) {
+                this.importErrors.push({
+                    message: child.text,
+                    line: ctx.start.line,
+                });
+            }
+        }
+
+        if (ctx.exception) {
+            this.importErrors.push({
+                message: ctx.exception.message || 'Import malformed',
+                line: ctx.exception.getOffendingToken().line,
+            });
+        }
+
+        if (this.importErrors.length > 0) {
+            return;
+        }
+
+        const importPath = ctx.children[3].text;
+        const importName = ctx.children[1].text;
+
+        const importPathNoQuotes = importPath.substring(1, importPath.length - 1);
+
+        let importPathAbsolute = importPathNoQuotes;
+
+        // Check if the import path is relative or absolute
+        if (importPathNoQuotes.startsWith('.')) {
+            importPathAbsolute = path.resolve(path.dirname(this.uri.fsPath), importPathNoQuotes);
+        }
+
+        // Check if the file exists
+        if (!fs.existsSync(importPathAbsolute)) {
+            this.importErrors.push({
+                message: `File not found: ${importPathAbsolute}`,
+                line: ctx.start.line,
+            });
+            return;
+        }
+
+        // Check that the file has a valid extension
+        const ext = path.extname(importPathAbsolute);
+        if (!EXTENSIONS.includes(ext)) {
+            this.importErrors.push({
+                message: `Invalid file extension: ${ext}\nValid extensions: ${EXTENSIONS.join(', ')}`,
+                line: ctx.start.line,
+            });
+            return;
+        }
+
+        workspace.openTextDocument(importPathAbsolute).then((document) => {
+            GlslEditor.processElements(document);
+            const documentInfo = GlslEditor.getDocumentInfo(document.uri);
+            const scope = documentInfo.getRootScope();
+            const importedFileFunctions = scope.functions;
+
+            // Rename the functions to include the import name
+            for (const func of importedFileFunctions) {
+                const declaration = func.getDeclaration();
+                // This code is called multiple times,
+                // so we need to check if the function has already been renamed
+                if (declaration.name.includes('.')) {
+                    continue;
+                }
+
+                declaration.name = `${importName}.${declaration.name}`;
+            }
+
+            this.scope.functions.push(...importedFileFunctions);
+        });
     }
 
     //

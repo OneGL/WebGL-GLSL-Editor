@@ -4,7 +4,7 @@ import { Scope } from './scope';
 
 export abstract class Element {
     public readonly nameInterval: Interval;
-    public readonly name: string;
+    public name: string;
     public readonly scope: Scope;
 
     public constructor(name: string, nameInterval: Interval, scope: Scope) {

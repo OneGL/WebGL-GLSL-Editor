@@ -5,6 +5,12 @@ export const keywords = new Map<string, Array<IKeyword>>([
         '100',
         [
             {
+                name: 'import',
+            },
+            {
+                name: 'from',
+            },
+            {
                 name: 'break',
             },
             {
@@ -49,6 +55,12 @@ export const keywords = new Map<string, Array<IKeyword>>([
     [
         '300',
         [
+            {
+                name: 'import',
+            },
+            {
+                name: 'from',
+            },
             {
                 name: 'break',
             },

@@ -4,7 +4,12 @@ options{
     tokenVocab = AntlrGlslLexer;
 }
 
-start : (function_prototype | function_definition | declaration_statement | SEMICOLON)*;
+start : (import_definition | function_prototype | function_definition | declaration_statement | SEMICOLON)*;
+
+/////
+//imports---------------------------------------------------------------------
+/////
+import_definition : KW_IMPORT IDENTIFIER KW_FROM STRING_LITERAL SEMICOLON;
 
 /////
 //functions---------------------------------------------------------------------

@@ -34,6 +34,7 @@ export class GlslDiagnosticProvider {
         this.initialize(document);
         this.addHints();
         this.addErrors();
+        this.addImportErrors();
     }
 
     private addHints(scope = this.di.getRootScope()): void {
@@ -184,6 +185,17 @@ export class GlslDiagnosticProvider {
         }
     }
 
+    private addImportErrors(): void {
+        const documentInfo = GlslEditor.getDocumentInfo(this.document.uri);
+        const importErrors = documentInfo.getImportErros();
+
+        for (const error of importErrors) {
+            this.diagnostics.push(
+                new Diagnostic(this.document.lineAt(error.line - 1).range, error.message, DiagnosticSeverity.Error)
+            );
+        }
+    }
+
     private getDiagnosticRows(data: string): Array<string> {
         const rows = data.split(Constants.NEW_LINE);
         const results = new Array<string>();
@@ -226,7 +238,19 @@ export class GlslDiagnosticProvider {
     private provideInput(result: ChildProcess): void {
         const stdinStream = new Stream.Readable();
         const text = this.di.getText();
-        stdinStream.push(text);
+
+        const lines = text.split('\n');
+        const newText = lines
+            .map((line) => {
+                if (line.trim().startsWith('import')) {
+                    return '// ' + line;
+                }
+
+                return line;
+            })
+            .join('\n');
+
+        stdinStream.push(newText);
         stdinStream.push(null);
         stdinStream.pipe(result.stdin);
     }

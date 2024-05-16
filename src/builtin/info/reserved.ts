@@ -2,6 +2,8 @@ export const reservedWords = new Map<string, Array<string>>([
     [
         '100',
         [
+            'import',
+            'from',
             'asm',
             'class',
             'union',
@@ -56,6 +58,8 @@ export const reservedWords = new Map<string, Array<string>>([
     [
         '300',
         [
+            'import',
+            'from',
             'attribute',
             'varying',
             'coherent',

@@ -17,6 +17,8 @@ KW_DISCARD : 'discard';
 KW_RETURN : 'return';
 KW_STRUCT : 'struct';
 KW_VOID : 'void';
+KW_IMPORT : 'import';
+KW_FROM : 'from';
 
 /////
 //qualifiers--------------------------------------------------------------------
@@ -234,3 +236,10 @@ RCB : '}';
 //square brackets
 LSB : '[';
 RSB : ']';
+
+
+/////
+//string literals---------------------------------------------------------------
+/////
+ESCAPE_SEQUENCE : '\\' [nrt"\\];
+STRING_LITERAL : '"' (~["\\\r\n] | ESCAPE_SEQUENCE)* '"';
