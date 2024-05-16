@@ -4,7 +4,7 @@ import { ErrorNode } from 'antlr4ts/tree/ErrorNode';
 import { RuleNode } from 'antlr4ts/tree/RuleNode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Uri, workspace } from 'vscode';
+import { TextDocument, Uri, workspace } from 'vscode';
 import { AntlrGlslLexer } from '../_generated/AntlrGlslLexer';
 import {
     AntlrGlslParser,
@@ -42,6 +42,7 @@ import { DocumentInfo } from './document-info';
 import { GlslEditor } from './glsl-editor';
 
 const EXTENSIONS = ['.glsl', '.vert', '.vs', '.frag', '.fs'];
+const documents: Map<string, TextDocument> = new Map();
 
 export type ImportError = {
     message: string;
@@ -234,26 +235,33 @@ export class GlslVisitor extends AbstractParseTreeVisitor<void> implements Antlr
             return;
         }
 
-        workspace.openTextDocument(importPathAbsolute).then((document) => {
-            GlslEditor.processElements(document);
-            const documentInfo = GlslEditor.getDocumentInfo(document.uri);
-            const scope = documentInfo.getRootScope();
-            const importedFileFunctions = scope.functions;
+        workspace.openTextDocument(importPathAbsolute).then((document) => documents.set(importPathAbsolute, document));
 
-            // Rename the functions to include the import name
-            for (const func of importedFileFunctions) {
-                const declaration = func.getDeclaration();
-                // This code is called multiple times,
-                // so we need to check if the function has already been renamed
-                if (declaration.name.includes('.')) {
-                    continue;
-                }
+        const document = documents.get(importPathAbsolute);
 
+        if (!document) {
+            return;
+        }
+
+        GlslEditor.processElements(document);
+        const documentInfo = GlslEditor.getDocumentInfo(document.uri);
+        const importedFileFunctions = documentInfo.getRootScope().functions;
+
+        // Rename the functions to include the import name
+        for (const func of importedFileFunctions) {
+            const declaration = func.getDeclaration();
+            // This code is called multiple times,
+            // so we need to check if the function has already been renamed
+            if (!declaration.name.includes('.')) {
                 declaration.name = `${importName}.${declaration.name}`;
             }
 
-            this.scope.functions.push(...importedFileFunctions);
-        });
+            if (this.scope.functionDefinitions.findIndex((f) => f.name === declaration.name) === -1) {
+                this.scope.functionDefinitions.push(declaration);
+            }
+        }
+
+        this.scope.functions.push(...importedFileFunctions);
     }
 
     //

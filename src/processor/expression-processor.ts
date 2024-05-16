@@ -310,7 +310,21 @@ export class ExpressionProcessor {
     }
 
     private isLengthExpression(): boolean {
-        return this.ctx.DOT() && !!this.ctx.function_call();
+        if (!this.ctx.DOT()) {
+            return false;
+        }
+
+        const functionCall = this.ctx.function_call();
+
+        if (!functionCall) {
+            return false;
+        }
+
+        if (functionCall.IDENTIFIER().text !== 'length') {
+            return false;
+        }
+
+        return true;
     }
 
     private processLengthExpression(): ExpressionResult {
@@ -328,18 +342,49 @@ export class ExpressionProcessor {
     }
 
     private isFunctionExpression(): boolean {
-        return this.ctx.function_call() && !this.ctx.DOT();
+        return this.ctx.function_call() && !this.isLengthExpression();
+    }
+
+    private findImportedFunction(name: string, scope: Scope): LogicalFunction {
+        const lf = scope.functions.find((lf) => lf.getDeclaration().name === name);
+
+        if (lf) {
+            return lf;
+        }
+
+        if (scope.parent) {
+            return this.findImportedFunction(name, scope.parent);
+        }
+
+        return null;
     }
 
     private processFunctionExpression(): ExpressionResult {
+        const isImported = this.ctx.DOT();
         const parameters = this.getParameters();
         const tn = this.ctx.function_call().IDENTIFIER()
             ? this.ctx.function_call().IDENTIFIER()
             : this.ctx.function_call().TYPE();
-        const name = tn.text;
+
+        let name: string;
+
+        if (isImported) {
+            name = this.ctx.text.split('(')[0];
+        } else {
+            name = tn.text;
+        }
+
         const interval = Helper.getIntervalFromParserRule(this.ctx.function_call(), this.di);
         const nameInterval = Helper.getIntervalFromTerminalNode(tn, this.di);
-        const lf = this.getLogicalFunction(name, nameInterval, parameters);
+
+        let lf: LogicalFunction;
+
+        if (isImported) {
+            lf = this.findImportedFunction(name, this.scope);
+        } else {
+            lf = this.getLogicalFunction(name, nameInterval, parameters);
+        }
+
         this.di.getRegions().semanticRegions.push(new SemanticRegion(tn.symbol, SemanticType.FUNCTION));
         this.addSignatureRegion(name, parameters);
         if (lf) {
