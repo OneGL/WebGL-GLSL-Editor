@@ -1,13 +1,13 @@
 {
-    "name": "webgl-glsl-editor",
-    "displayName": "WebGL GLSL Editor",
+    "name": "glsl-with-imports",
+    "displayName": "GLSL with Imports",
     "icon": "res/png/icon.png",
     "description": "Language support for WebGL GLSL shaders.",
     "author": "Rácz Zalán",
-    "publisher": "raczzalan",
+    "publisher": "LuisHerasme",
     "repository": {
         "type": "git",
-        "url": "https://github.com/racz16/WebGL-GLSL-Editor"
+        "url": "https://github.com/OneGL/WebGL-GLSL-Editor"
     },
     "bugs": {
         "email": "zalan.racz.dev@gmail.com",
@@ -28,7 +28,7 @@
         "color": "#990000",
         "theme": "dark"
     },
-    "version": "1.3.8",
+    "version": "1.3.11",
     "engines": {
         "vscode": "^1.65.0"
     },
@@ -320,7 +320,7 @@
         "package-windows-x64": "vsce package --target win32-x64 --ignoreFile vscodeignore/windows.vscodeignore",
         "package-mac-x64": "vsce package --target darwin-x64 --ignoreFile vscodeignore/mac.vscodeignore",
         "package-linux-x64": "vsce package --target linux-x64 --ignoreFile vscodeignore/linux.vscodeignore",
-        "package-all": "start npm run package-universal && start npm run package-web && start npm run package-windows-x64 && start npm run package-mac-x64 && start npm run package-linux-x64",
+        "package-all": "npm run package-universal && npm run package-web && npm run package-windows-x64 && npm run package-mac-x64 && npm run package-linux-x64",
         "prepare": "husky install"
     },
     "devDependencies": {
@@ -346,7 +346,9 @@
         "webpack-cli": "^5.1.4"
     },
     "dependencies": {
-        "antlr4ts": "^0.5.0-alpha.4"
+        "antlr4ts": "^0.5.0-alpha.4",
+        "@onegl/glsl-imports": "git+https://github.com/OneGL/glsl-imports.git",
+        "@onegl/glsl-parser": "git+https://github.com/OneGL/glsl-parser.git"
     },
     "lint-staged": {
         "*": "prettier --write --ignore-unknown"

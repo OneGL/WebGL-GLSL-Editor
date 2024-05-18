@@ -21,9 +21,16 @@ const desktopExtensionConfig = {
     devtool: 'source-map',
     externals: {
         vscode: 'commonjs vscode',
+        '@onegl/glsl-imports': 'commonjs @onegl/glsl-imports',
     },
     resolve: {
         extensions: ['.ts', '.js'],
+        modules: [path.resolve(__dirname, 'node_modules'), 'node_modules'],
+        fallback: {
+            '@onegl/glsl-imports': path.resolve(__dirname, 'node_modules/@onegl/glsl-imports'),
+            '@onegl/glsl-parser': path.resolve(__dirname, 'node_modules/@onegl/glsl-parser'),
+            '@onegl/glsl-parser/ast': path.resolve(__dirname, 'node_modules/@onegl/glsl-parser/ast'),
+        },
     },
     module: {
         rules: [
@@ -54,12 +61,19 @@ const webExtensionConfig = {
     devtool: 'source-map',
     externals: {
         vscode: 'commonjs vscode',
+        '@onegl/glsl-imports': 'commonjs @onegl/glsl-imports',
     },
     resolve: {
         mainFields: ['module', 'main'],
         extensions: ['.ts', '.js'],
+        modules: [path.resolve(__dirname, 'node_modules'), 'node_modules'],
         fallback: {
             assert: require.resolve('assert'),
+            '@onegl/glsl-imports': path.resolve(__dirname, 'node_modules/@onegl/glsl-imports'),
+            '@onegl/glsl-parser': path.resolve(__dirname, 'node_modules/@onegl/glsl-parser'),
+            '@onegl/glsl-parser/ast': path.resolve(__dirname, 'node_modules/@onegl/glsl-parser/ast'),
+            path: false,
+            fs: false,
         },
     },
     module: {

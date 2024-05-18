@@ -1,3 +1,4 @@
+import { ImportResolver } from '@onegl/glsl-imports/dist/index.js';
 import { ChildProcess, exec } from 'child_process';
 import { platform } from 'os';
 import { Stream } from 'stream';
@@ -217,7 +218,11 @@ export class GlslDiagnosticProvider {
             if (line > 0) {
                 const error = row.substring(9 + i + 2);
                 this.diagnostics.push(
-                    new Diagnostic(this.document.lineAt(line - 1).range, error, DiagnosticSeverity.Error)
+                    new Diagnostic(
+                        this.document.lineAt(line - 1 - this.linesAddedByImports).range,
+                        error,
+                        DiagnosticSeverity.Error
+                    )
                 );
             } else {
                 this.di.setInjectionError(true);
@@ -229,28 +234,26 @@ export class GlslDiagnosticProvider {
             if (line > 0) {
                 const error = row.substring(11 + i + 2);
                 this.diagnostics.push(
-                    new Diagnostic(this.document.lineAt(line - 1).range, error, DiagnosticSeverity.Warning)
+                    new Diagnostic(
+                        this.document.lineAt(line - 1 - this.linesAddedByImports).range,
+                        error,
+                        DiagnosticSeverity.Warning
+                    )
                 );
             }
         }
     }
 
-    private provideInput(result: ChildProcess): void {
+    private linesAddedByImports = 0;
+
+    private async provideInput(result: ChildProcess) {
         const stdinStream = new Stream.Readable();
         const text = this.di.getText();
+        const outputFile = await ImportResolver.resolve(this.di.getDocument().uri.fsPath);
 
-        const lines = text.split('\n');
-        const newText = lines
-            .map((line) => {
-                if (line.trim().startsWith('import')) {
-                    return '// ' + line;
-                }
+        this.linesAddedByImports = outputFile.split('\n').length - text.split('\n').length;
 
-                return line;
-            })
-            .join('\n');
-
-        stdinStream.push(newText);
+        stdinStream.push(outputFile);
         stdinStream.push(null);
         stdinStream.pipe(result.stdin);
     }
